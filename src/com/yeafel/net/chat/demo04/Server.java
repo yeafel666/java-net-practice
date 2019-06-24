@@ -1,4 +1,4 @@
-package com.yeafel.net.chat.demo03;
+package com.yeafel.net.chat.demo04;
 
 import java.io.DataInputStream;
 import java.io.DataOutputStream;
@@ -47,11 +47,16 @@ public class Server {
         private DataInputStream dataInputStream;
         private DataOutputStream dataOutputStream;
         private boolean isRunning = true;
+        private String name;
 
         public MyChannel(Socket client) {
             try {
                 dataInputStream = new DataInputStream(client.getInputStream());
                 dataOutputStream = new DataOutputStream(client.getOutputStream());
+
+                this.name = dataInputStream.readUTF();
+                this.send("欢迎您进入聊天室");
+                sendOthers(this.name+"进入了聊天室",true);
             } catch (IOException e) {
                 //e.printStackTrace();
                 CloseUtil.closeAll(dataInputStream,dataOutputStream);
@@ -98,22 +103,40 @@ public class Server {
         /**
          * 发送给其他客户端
          */
-        private void sendOthers() {
-            String msg = this.receive();
-            //遍历容器
-            for (MyChannel other : all) {
-                if (other == this) {
-                    continue;
+        private void sendOthers(String msg, boolean sys) {
+            //是否为私聊 约定@XXX为私聊
+            System.out.println(msg);
+            if (msg.startsWith("@") && msg.contains(":")) {  //私聊
+                //获取name
+                String name = msg.substring(1,msg.indexOf(":"));
+                String content = msg.substring(msg.indexOf(":")+1);
+                for (MyChannel other : all) {
+                    if (other.name.equals(name)) {
+                        other.send(this.name+"对您悄悄的说："+content);
+                    }
                 }
-                //发送其他客户端
-                other.send(msg);
+            } else {
+                //遍历容器
+                for (MyChannel other : all) {
+                    if (other == this) {
+                        continue;
+                    }
+                    if (sys) {
+                        //系统信息
+                        other.send("系统信息：" + msg);
+                    } else {
+                        //发送其他客户端
+                        other.send(this.name+"对所有人说："+msg);
+                    }
+                }
             }
+
         }
 
         @Override
         public void run() {
             while (isRunning) {
-                sendOthers();
+                sendOthers(receive(),false);
             }
         }
     }
