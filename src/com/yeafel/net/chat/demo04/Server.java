@@ -27,12 +27,12 @@ public class Server {
     public void start() throws IOException {
         ServerSocket serverSocket = new ServerSocket(9999);
 
-        //如果这样接收多个客户端，存在先后顺序，必须等前一个客户端通信完成后，才可以进行下一个客户端通信，这样不好。如何更好的实现呢？看demo03
+        //如果这样接收多个客户端，存在先后顺序，必须等前一个客户端通信完成后，才可以进行下一个客户端通信，这样不好。如何更好的实现呢？
         while (true) {
             Socket client = serverSocket.accept();
             MyChannel channel = new MyChannel(client);
             all.add(channel);//统一管理
-            new Thread(channel).start();  //一条道路
+            new Thread(channel).start();  //一条道路，一个用户一条管道，互不影响。不用考虑通信的先后顺序，可同时通信。
         }
     }
 
@@ -105,9 +105,8 @@ public class Server {
          */
         private void sendOthers(String msg, boolean sys) {
             //是否为私聊 约定@XXX为私聊
-            System.out.println(msg);
             if (msg.startsWith("@") && msg.contains(":")) {  //私聊
-                //获取name
+                //获取name,substring左闭右开。
                 String name = msg.substring(1,msg.indexOf(":"));
                 String content = msg.substring(msg.indexOf(":")+1);
                 for (MyChannel other : all) {

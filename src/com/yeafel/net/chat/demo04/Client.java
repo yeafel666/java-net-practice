@@ -29,6 +29,7 @@ public class Client {
 
         Socket client = new Socket("localhost",9999);
         //控制台输入流
+        //回顾(我的理解)：main方法是一个线程，main方法下有两个独立的线程，客户端的读和写，他们不应该受先后顺序的牵制。没有写也可以读，没有读也可以写。
         new Thread(new Send(client,name)).start(); //一条路径
         new Thread(new Receive(client)).start(); //一条路径
 
